@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/main/spec/manifest-0.15.schema.json",
+  "manifestVersion": "0.15",
+  "id": "dsh-caveman",
+  "name": "dsh-caveman",
+  "version": "0.1.0",
+  "facets": {
+    "host": {
+      "entry": "index.js",
+      "apiVersion": "v1alpha1"
+    }
+  },
+  "requires": {
+    "contracts": [
+      { "apiVersion": "tui.dsh/v1alpha1", "kind": "DecisionEvents" },
+      { "apiVersion": "commands.dsh/v1alpha1", "kind": "Command" }
+    ]
+  },
+  "permissions": [
+    {
+      "name": "session.input.intercept",
+      "scope": "tui/input",
+      "reason": "Ponytail 'stop ponytail'/'normal mode' deactivation observes user input before delivery (tui/input)."
+    }
+  ],
+  "contributes": {
+    "commands": [
+      { "id": "dsh-caveman.abort", "title": "Abort", "description": "Abort the current agent operation" },
+      { "id": "dsh-caveman.caveman", "title": "Caveman", "description": "Toggle caveman mode" },
+      { "id": "dsh-caveman.ponytail", "title": "Ponytail", "description": "Set ponytail mode" },
+      { "id": "dsh-caveman.ponytail-review", "title": "Ponytail review", "description": "Run /skill:ponytail-review" },
+      { "id": "dsh-caveman.ponytail-audit", "title": "Ponytail audit", "description": "Run /skill:ponytail-audit" },
+      { "id": "dsh-caveman.ponytail-gain", "title": "Ponytail gain", "description": "Run /skill:ponytail-gain" },
+      { "id": "dsh-caveman.ponytail-debt", "title": "Ponytail debt", "description": "Run /skill:ponytail-debt" },
+      { "id": "dsh-caveman.ponytail-help", "title": "Ponytail help", "description": "Run /skill:ponytail-help" }
+    ]
+  },
+  "subscriptions": [],
+  "license": "MIT",
+  "source": {
+    "repository": "https://github.com/xz-dev/dsh-caveman"
+  }
+}

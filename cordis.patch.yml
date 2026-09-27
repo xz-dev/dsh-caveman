@@ -1,0 +1,14 @@
+# dsh-caveman bundle patch: caveman + ponytail + abort + rtk port.
+# Inserted after every bundle layer (same anchor as third-party dsh plugins).
+- insert:
+    - id: dsh-caveman
+      name: 'dsh-caveman'
+      config:
+        # Defaults mirror the user's Pi state: caveman defaultLevel=full,
+        # showStatus=true; ponytail defaultMode=full; rtk enabled.
+        ponytailDefaultMode: full
+        ponytailHideStatus: false
+        ponytailQuietStartup: false
+        cavemanDefaultLevel: full
+        cavemanShowStatus: true
+        rtkEnabled: true

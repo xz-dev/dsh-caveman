@@ -1,0 +1,60 @@
+{
+  "name": "dsh-caveman",
+  "version": "0.1.0",
+  "description": "Port of pi-caveman + ponytail + pi-abort-command + rtk.ts to DeepSeek Harness (dsh-tui 0.11.1)",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "dsh-plugin.json",
+    "README.md",
+    "BEHAVIOR.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "caveman",
+    "ponytail",
+    "rtk"
+  ],
+  "author": "Xiangzhe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xz-dev/dsh-caveman.git"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-bash-local": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-commands": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-subprocess": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.1.7-rc.2",
+    "@deepseek-ai/schemastery": "3.18.4"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-bash-local": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-subprocess": {
+      "optional": true
+    }
+  }
+}
