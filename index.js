@@ -1,7 +1,8 @@
 // dsh-caveman — DSH port of pi-caveman, ponytail, pi-abort-command, and rtk.ts.
 // One cordis plugin; four feature groups, each faithful to its Pi source.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 // The '@deepseek-ai/' prefixes are literal — pnpm install of this package into
@@ -331,6 +332,33 @@ const PONYTAIL_ICONS = { lite: '🌿', full: '⚡', ultra: '🔥' };
 // to older readers, log-only, no surface intent).
 // ---------------------------------------------------------------------------
 
+export const SESSION_EVENT_TYPES = ['dsh-caveman/caveman-level', 'dsh-caveman/ponytail-mode'];
+
+/** session.append() cannot set `ignorable`, and persisted readers refuse unknown
+ *  non-ignorable types (whole session unreadable: resume, session search).
+ *  Register ours in every reachable dsh-session copy, as dsh-cache-tools does. */
+export function registerSessionEventTypes(anchors = [import.meta.url, process.argv[1]]) {
+  const done = new Set();
+  const add = (req) => {
+    try {
+      const resolved = req.resolve('@deepseek-ai/dsh-session');
+      let key = resolved;
+      try { key = realpathSync(resolved); } catch { /* keep resolved */ }
+      if (done.has(key)) return;
+      done.add(key);
+      const known = req(resolved).KNOWN_SESSION_EVENT_TYPES;
+      for (const type of SESSION_EVENT_TYPES) known?.add(type);
+    } catch { /* not reachable */ }
+  };
+  for (const anchor of anchors.filter((a) => typeof a === 'string' && a.length > 0)) {
+    let req;
+    try { req = createRequire(anchor); } catch { continue; }
+    add(req);
+    try { add(createRequire(req.resolve('@deepseek-ai/dsh-session-persistence'))); } catch { /* absent */ }
+  }
+  return done.size;
+}
+
 function lastCustomLevel(session, eventType, key) {
   try {
     const events = session.snapshotEvents();
@@ -471,6 +499,7 @@ export function wrapShellForRtk(ctx, shell, rewrite) {
 // ---------------------------------------------------------------------------
 
 export function apply(ctx, config) {
+  registerSessionEventTypes();
   const logger = ctx.logger('dsh-caveman');
 
   // ---- shared session-scoped state -----------------------------------------

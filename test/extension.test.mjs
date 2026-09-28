@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createRequire } from 'node:module';
 import test from 'node:test';
 
 import {
@@ -10,6 +11,8 @@ import {
   filterSkillBodyForMode,
   getPonytailInstructions,
   ponytailSkillPaths,
+  registerSessionEventTypes,
+  SESSION_EVENT_TYPES,
   wrapShellForRtk,
 } from '../index.js';
 
@@ -357,4 +360,23 @@ test('rtk wrapper never throws (fail-open)', async () => {
   wrapShellForRtk({}, shell, async () => { throw new Error('boom'); });
   await shell.execute({ command: 'git status' });
   assert.deepEqual(calls, ['git status']);
+});
+
+// Without registration every session carrying our events is refused by the
+// persisted reader ("unknown to this harness and not marked ignorable"),
+// breaking resume and session search for all sessions.
+test('registerSessionEventTypes adds our event types to dsh-session KNOWN_SESSION_EVENT_TYPES', () => {
+  const root = mkdtempSync(join(tmpdir(), 'caveman-known-'));
+  try {
+    const pkg = join(root, 'node_modules', '@deepseek-ai', 'dsh-session');
+    mkdirSync(pkg, { recursive: true });
+    writeFileSync(join(pkg, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-session', main: 'index.cjs' }));
+    writeFileSync(join(pkg, 'index.cjs'), 'exports.KNOWN_SESSION_EVENT_TYPES = new Set(["user/message"]);');
+    assert.equal(registerSessionEventTypes([join(root, 'anchor.js')]), 1);
+    const known = createRequire(join(root, 'anchor.js'))('@deepseek-ai/dsh-session').KNOWN_SESSION_EVENT_TYPES;
+    for (const type of SESSION_EVENT_TYPES) assert.ok(known.has(type), type);
+    assert.equal(registerSessionEventTypes([]), 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
