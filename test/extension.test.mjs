@@ -9,6 +9,7 @@ import {
   Config,
   filterSkillBodyForMode,
   getPonytailInstructions,
+  ponytailSkillPaths,
   wrapShellForRtk,
 } from '../index.js';
 
@@ -87,12 +88,9 @@ function makeInvocation(agent, rawInput = '') {
 function withTempConfig(fn) {
   const dir = mkdtempSync(join(tmpdir(), 'dsh-caveman-test-'));
   const prevXdg = process.env.XDG_CONFIG_HOME;
-  const prevPi = process.env.PI_CODING_AGENT_DIR;
   process.env.XDG_CONFIG_HOME = dir;
-  delete process.env.PI_CODING_AGENT_DIR;
   return Promise.resolve().then(fn).finally(() => {
     if (prevXdg === undefined) delete process.env.XDG_CONFIG_HOME; else process.env.XDG_CONFIG_HOME = prevXdg;
-    if (prevPi === undefined) delete process.env.PI_CODING_AGENT_DIR; else process.env.PI_CODING_AGENT_DIR = prevPi;
     rmSync(dir, { recursive: true, force: true });
   });
 }
@@ -303,6 +301,11 @@ test('filterSkillBodyForMode keeps only matching mode rows/examples', () => {
   assert.doesNotMatch(out, /lite example/);
   assert.match(out, /NotAMode: "kept"/);
   assert.match(out, /Normal bullet stays/);
+});
+
+test('ponytail skill is looked up in $DSH_HOME/skills then ~/.agents/skills', () => {
+  const paths = ponytailSkillPaths({ DSH_HOME: '/d', DSH_AGENTS_HOME: '/a' });
+  assert.deepEqual(paths, ['/d/skills/ponytail/SKILL.md', '/a/skills/ponytail/SKILL.md']);
 });
 
 test('getPonytailInstructions falls back when skill missing', () => {

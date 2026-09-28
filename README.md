@@ -4,7 +4,7 @@ One cordis plugin for DeepSeek Harness that ports four Pi setup pieces to DSH + 
 
 | Source (Pi) | What it does |
 |---|---|
-| [jonjonrankin/pi-caveman](https://github.com/jonjonrankin/pi-caveman) | `/caveman` terse-mode levels, animated campfire status, system-prompt injection, `caveman.json` persisted defaults |
+| [jonjonrankin/pi-caveman](https://github.com/jonjonrankin/pi-caveman) | `/caveman` terse-mode levels, animated campfire status, system-prompt injection; defaults from the plugin config (Pi's `caveman.json` is not read) |
 | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) (`pi-extension/` + `hooks/`) | `/ponytail` lazy-dev modes, instruction injection filtered by mode, status dot, `/ponytail-*` skill aliases, whole-message `stop ponytail`/`normal mode` deactivation |
 | `~/.pi/agent/extensions/rtk.ts` | Rewrites `bash -c` tool commands through `rtk rewrite` (>= 0.23.0) for token savings, fail-open |
 | [xz-dev/pi-abort-command](https://github.com/xz-dev/pi-abort-command) | `/abort` cancels the current agent operation |
@@ -46,8 +46,8 @@ fallback (the line is delivered to the model — same as Pi).
 | `ponytailDefaultMode` | `PONYTAIL_DEFAULT_MODE` | `$XDG_CONFIG_HOME/ponytail/config.json` `defaultMode` | `full` |
 | `ponytailHideStatus` | `PONYTAIL_HIDE_STATUS` | same file `hideStatus` | `false` |
 | `ponytailQuietStartup` | `PONYTAIL_QUIET_STARTUP` | same file `quietStartup` | `false` |
-| `cavemanDefaultLevel` | — | `$PI_CODING_AGENT_DIR/caveman.json` `defaultLevel` | `full` |
-| `cavemanShowStatus` | — | same file `showStatus` | `true` |
+| `cavemanDefaultLevel` | — | — | `full` |
+| `cavemanShowStatus` | — | — | `true` |
 | `rtkEnabled` | `RTK_DISABLED=1` disables | — | `true` |
 
 Existing Pi config files are read first (resolution order preserved verbatim),
@@ -63,9 +63,10 @@ fallback layer.
 /abort
 ```
 
-Ponytail skills must be present in `$DSH_HOME/skills/ponytail*` (they are, in the
-daily profile); the instruction injector reads `ponytail/SKILL.md` and falls back
-to the built-in text when missing.
+Install the ponytail skills with `npx skills add DietrichGebert/ponytail -g`. The
+instruction injector reads `ponytail/SKILL.md` from `$DSH_HOME/skills`, then
+`$DSH_AGENTS_HOME` (default `~/.agents`)`/skills`, and falls back to the built-in
+text when neither has it.
 
 ## Test
 

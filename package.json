@@ -1,6 +1,6 @@
 {
   "name": "dsh-caveman",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Port of pi-caveman + ponytail + pi-abort-command + rtk.ts to DeepSeek Harness (dsh-tui 0.11.1)",
   "type": "module",
   "main": "index.js",

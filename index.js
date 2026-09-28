@@ -33,7 +33,7 @@ export const Config = z.object({
   ponytailDefaultMode: z.union(PONYTAIL_MODES.map((m) => z.const(m))).default('full'),
   ponytailHideStatus: z.boolean().default(false),
   ponytailQuietStartup: z.boolean().default(false),
-  // Caveman knobs (caveman.json analogues).
+  // Caveman knobs.
   cavemanDefaultLevel: z.union(CAVEMAN_LEVELS.map((m) => z.const(m))).default('full'),
   cavemanShowStatus: z.boolean().default(true),
   // rtk rewrite.
@@ -41,9 +41,9 @@ export const Config = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Pi-side persisted defaults (read-mostly): ~/.config/ponytail/config.json and
-// <PI_CODING_AGENT_DIR>/caveman.json are consulted first so a user's existing
-// Pi config carries over verbatim; the DSH patch row config is the fallback.
+// Persisted ponytail defaults: ~/.config/ponytail/config.json (ponytail's own
+// XDG file, shared with other ponytail hosts) is consulted first; the DSH
+// patch row config is the fallback. Caveman reads only the plugin config.
 // ---------------------------------------------------------------------------
 
 function envTruthy(value) {
@@ -116,37 +116,39 @@ function writePonytailDefaultMode(mode) {
   }
 }
 
-// caveman's persisted config (caveman.ts analogues).
-function piConfigDir() {
-  if (process.env.PI_CODING_AGENT_DIR) return process.env.PI_CODING_AGENT_DIR;
-  return join(xdgConfigHome(), 'pi', 'agent');
-}
-
-function cavemanFileConfig() {
-  return readJsonSafe(join(piConfigDir(), 'caveman.json'));
-}
-
+// caveman defaults live in the plugin config (/settings), not a side file.
 function cavemanDefaultLevel(config) {
-  const file = cavemanFileConfig();
-  if (typeof file.defaultLevel === 'string' && CAVEMAN_LEVELS.includes(file.defaultLevel)) return file.defaultLevel;
   return config.cavemanDefaultLevel;
 }
 
 function cavemanShowStatus(config) {
-  const file = cavemanFileConfig();
-  if (typeof file.showStatus === 'boolean') return file.showStatus;
   return config.cavemanShowStatus;
 }
 
 // ---------------------------------------------------------------------------
 // Ponytail instructions (verbatim port of hooks/ponytail-instructions.js).
-// SKILL_PATH points at the DSH-synced copy of the ponytail skill.
+// The skill body comes from the installed ponytail skill in the DSH user
+// skill roots ($DSH_HOME/skills, then $DSH_AGENTS_HOME|~/.agents/skills,
+// where `npx skills add -g` puts it).
 // ---------------------------------------------------------------------------
 
-const PONYTAIL_SKILL_PATH = join(
-  process.env.DSH_HOME ?? join(homedir(), '.dsh'),
-  'skills', 'ponytail', 'SKILL.md',
-);
+export function ponytailSkillPaths(env = process.env) {
+  return [
+    join(env.DSH_HOME ?? join(homedir(), '.dsh'), 'skills', 'ponytail', 'SKILL.md'),
+    join(env.DSH_AGENTS_HOME ?? join(homedir(), '.agents'), 'skills', 'ponytail', 'SKILL.md'),
+  ];
+}
+
+function readPonytailSkill() {
+  for (const path of ponytailSkillPaths()) {
+    try {
+      return readFileSync(path, 'utf8');
+    } catch {
+      // try the next root
+    }
+  }
+  throw new Error('ponytail skill not installed');
+}
 
 export function filterSkillBodyForMode(body, mode) {
   const effectiveMode = PONYTAIL_MODES.includes(mode) ? mode : 'full';
@@ -214,7 +216,7 @@ export function getPonytailInstructions(mode) {
   const configuredMode = PONYTAIL_MODES.includes(mode) && mode !== 'off' ? mode : 'full';
   try {
     return 'PONYTAIL MODE ACTIVE — level: ' + configuredMode + '\n\n' +
-      filterSkillBodyForMode(readFileSync(PONYTAIL_SKILL_PATH, 'utf8'), configuredMode);
+      filterSkillBodyForMode(readPonytailSkill(), configuredMode);
   } catch {
     return ponytailFallbackInstructions(configuredMode);
   }
@@ -625,7 +627,7 @@ export function apply(ctx, config) {
       const arg = (invocation.rawInput || '').trim().toLowerCase();
       const session = invocation.agent.session;
       if (arg === 'config') {
-        return { kind: 'success', text: `Caveman config: level=${cavemanLevel} default=${configuredCavemanDefault} status=${showCavemanStatus ? 'on' : 'off'} — set defaults via /settings (dsh-caveman) or ${join(piConfigDir(), 'caveman.json')}.` };
+        return { kind: 'success', text: `Caveman config: level=${cavemanLevel} default=${configuredCavemanDefault} status=${showCavemanStatus ? 'on' : 'off'} — set defaults via /settings (dsh-caveman).` };
       }
       if (!arg) {
         setCavemanLevel(cavemanLevel === 'off' ? 'full' : 'off', session);
